@@ -1,0 +1,7 @@
+/archway-nft-stream
+/nats.creds
+/start.sh
+.DS_Store
+/.env
+/coverage.out
+/tmp

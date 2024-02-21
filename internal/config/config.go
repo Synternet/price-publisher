@@ -12,9 +12,10 @@ type CmcConfig struct {
 }
 
 type NatsConfig struct {
-	Urls    string
-	NKey    string
-	Subject string
+	Urls          string
+	NKey          string
+	PrefixName    string
+	PublisherName string
 }
 
 type Config struct {
@@ -44,7 +45,8 @@ func Init() (config *Config, err error) {
 	}
 
 	viper.SetDefault("NATS_URLS", "nats://europe-west3-gcp-dl-testnet-brokernode-frankfurt01.syntropynet.com")
-	viper.SetDefault("NATS_SUBJECT", "syntropy_defi.price")
+	viper.SetDefault("NATS_PREFIX_NAME", "syntropy_defi")
+	viper.SetDefault("NATS_PUB_NAME", "price")
 	viper.SetDefault("PUBLISH_INTERVAL_SEC", 60)
 
 	viper.AutomaticEnv()
@@ -57,9 +59,10 @@ func parseOsEnv(v *viper.Viper) *Config {
 	return &Config{
 		PublishIntervalSec: v.GetInt64("PUBLISH_INTERVAL_SEC"),
 		NatsConfig: NatsConfig{
-			Urls:    v.GetString("NATS_URLS"),
-			NKey:    v.GetString("NATS_NKEY"),
-			Subject: v.GetString("NATS_SUBJECT"),
+			Urls:          v.GetString("NATS_URLS"),
+			NKey:          v.GetString("NATS_NKEY"),
+			PrefixName:    v.GetString("NATS_PREFIX_NAME"),
+			PublisherName: v.GetString("NATS_PUB_NAME"),
 		},
 		CmcConfig: CmcConfig{
 			Ids:    v.GetString("CMC_IDS"),

@@ -2,52 +2,46 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/nats-io/nats.go"
+	"github.com/syntropynet/data-layer-sdk/pkg/options"
 	"github.com/syntropynet/price-publisher/internal/config"
 	"github.com/syntropynet/price-publisher/internal/service"
 	"github.com/syntropynet/price-publisher/pkg/cmc"
-
-	svcnats "github.com/SyntropyNet/pubsub-go/pubsub"
-	"github.com/nats-io/nats.go"
 )
 
 func main() {
 	cfg, err := config.Init()
 	if err != nil {
-		log.Fatalln(err)
+		panic(fmt.Errorf("failed to parse config: %w", err))
 	}
 
-	logStdout(func() {
-		log.Println("Data collection:")
-		log.Printf("- Interval: %d", cfg.PublishIntervalSec)
-	})
+	slog.Info("Config", "PublishIntervalSec", cfg.PublishIntervalSec)
 
-	opts := []nats.Option{}
-
-	flagUserCredsJWT, err := svcnats.CreateAppJwt(cfg.NatsConfig.NKey)
+	nkey, jwt, err := CreateUser(cfg.NatsConfig.NKey)
 	if err != nil {
-		log.Fatalf("failed to create sub JWT: %v", err)
+		panic(fmt.Errorf("failed to create JWT: %w", err))
 	}
 
-	opts = append(opts, nats.UserJWTAndSeed(flagUserCredsJWT, cfg.NatsConfig.NKey))
+	conn, err := options.MakeNats("Price Publisher", cfg.NatsConfig.Urls, "", *nkey, *jwt, "", "", "")
+	if err != nil {
+		panic(fmt.Errorf("failed to connect to NATS %s: %w", cfg.NatsConfig.Urls, err))
+	}
 
-	svcnPub := svcnats.MustConnect(
-		svcnats.Config{
-			URI:  cfg.NatsConfig.Urls,
-			Opts: opts,
-		})
-	logStdout(func() {
-		log.Println("NATS server connected.")
-	})
+	setErrorHandlers(conn)
+
+	slog.Info("Connected to NATS", "URLS", cfg.NatsConfig.Urls)
 
 	allMsgChan := make(service.AllMessageChannel, 1024)
 
-	sPub := service.NewPublishService(svcnPub, context.Background(), service.NewConfig(cfg.NatsConfig.Subject), allMsgChan)
+	sPub := service.New(conn, context.Background(), cfg.NatsConfig.PrefixName, cfg.NatsConfig.PublisherName, allMsgChan)
+	sPub.Start()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -57,7 +51,7 @@ func main() {
 
 	go func() {
 		<-c
-		log.Println("Service interrupted. Exiting...")
+		slog.Info("Service interrupted. Exiting...")
 		cancel()
 	}()
 
@@ -71,6 +65,8 @@ func main() {
 		ApiKey: cfg.CmcConfig.ApiKey,
 	}
 
+	defer sPub.Close()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -79,7 +75,7 @@ func main() {
 
 			quotes, err := cmc.RetrievePrices(cmcConfig)
 			if err != nil {
-				log.Println(err)
+				slog.Error(err.Error())
 				continue
 			}
 
@@ -87,7 +83,7 @@ func main() {
 			for id, dataItem := range quotes.Data {
 				usdQuote, ok := dataItem.Quote["USD"]
 				if !ok {
-					log.Printf("USD quote for ID %s not found\n", id)
+					slog.Info("USD quote not found", "ID", id)
 					continue
 				}
 
@@ -103,9 +99,18 @@ func main() {
 	}
 }
 
-func logStdout(myFn func()) {
-	originalOutput := log.Writer()
-	log.SetOutput(os.Stdout)
-	myFn()
-	log.SetOutput(originalOutput)
+func setErrorHandlers(conn *nats.Conn) {
+	if conn == nil {
+		return
+	}
+
+	conn.SetErrorHandler(func(_ *nats.Conn, _ *nats.Subscription, err error) {
+		slog.Error("NATS error", err)
+	})
+	conn.SetDisconnectHandler(func(c *nats.Conn) {
+		slog.Error("NATS disconnected", c.LastError())
+	})
+	conn.SetReconnectHandler(func(_ *nats.Conn) {
+		slog.Info("NATS reconnected")
+	})
 }

@@ -3,63 +3,49 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 
+	"github.com/nats-io/nats.go"
+	"github.com/syntropynet/data-layer-sdk/pkg/service"
 	"github.com/syntropynet/price-publisher/pkg/cmc"
-
-	svcn "github.com/SyntropyNet/pubsub-go/pubsub"
 )
-
-type Config struct {
-	PubTxSubjectPrefix string
-}
 
 type (
 	AllMessageChannel chan map[string]cmc.QuoteInfo
 )
 
 type PublishService struct {
+	*service.Service
 	ctx             context.Context
-	cfg             Config
-	nats            *svcn.NatsService
+	nats            *nats.Conn
 	allMsgTokenChan AllMessageChannel
 }
 
-func NewConfig(publisherSubjectPrefix string) Config {
-	cfg := Config{
-		PubTxSubjectPrefix: publisherSubjectPrefix,
-	}
-	return cfg
-}
-
-func NewPublishService(s *svcn.NatsService, ctx context.Context, cfg Config, allMsgChan AllMessageChannel) *PublishService {
-	return &PublishService{
+func New(conn *nats.Conn, ctx context.Context, prefixName string, publisherName string, allMsgChan AllMessageChannel) *PublishService {
+	ret := &PublishService{
+		Service:         &service.Service{},
 		ctx:             ctx,
-		cfg:             cfg,
-		nats:            s,
 		allMsgTokenChan: allMsgChan,
 	}
+
+	ret.Configure(service.WithContext(ctx), service.WithPrefix(prefixName), service.WithName(publisherName), service.WithPubNats(conn))
+
+	return ret
 }
 
-func (s PublishService) Serve(ctx context.Context) {
+func (s *PublishService) Start() context.Context {
+	return s.Service.Start()
+}
+
+func (s *PublishService) Serve(ctx context.Context) {
 	for msg := range s.allMsgTokenChan {
-		subject := constructAllSubject(s.cfg.PubTxSubjectPrefix)
-		if err := s.nats.PublishAsJSON(s.ctx, subject, msg); err != nil {
-			log.Printf("ERROR: %s", err.Error())
+		if err := s.Publish(msg, "all"); err != nil {
+			slog.Error(err.Error())
 		}
 		for symbol, data := range msg {
-			subject := constructSingleSubject(s.cfg.PubTxSubjectPrefix, symbol)
-			if err := s.nats.PublishAsJSON(s.ctx, subject, data); err != nil {
-				log.Printf("ERROR: %s", err.Error())
+			if err := s.Publish(data, fmt.Sprintf("single.%s", symbol)); err != nil {
+				slog.Error(err.Error())
 			}
 		}
 	}
-}
-
-func constructAllSubject(prefix string) string {
-	return fmt.Sprintf("%s.all", prefix)
-}
-
-func constructSingleSubject(prefix string, symbol string) string {
-	return fmt.Sprintf("%s.single.%s", prefix, symbol)
 }

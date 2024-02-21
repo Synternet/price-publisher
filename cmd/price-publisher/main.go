@@ -40,7 +40,7 @@ func main() {
 
 	allMsgChan := make(service.AllMessageChannel, 1024)
 
-	sPub := service.New(conn, context.Background(), service.NewConfig(cfg.NatsConfig.Subject), allMsgChan)
+	sPub := service.New(conn, context.Background(), cfg.NatsConfig.PrefixName, cfg.NatsConfig.PublisherName, allMsgChan)
 	sPub.Start()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -75,7 +75,6 @@ func main() {
 
 			quotes, err := cmc.RetrievePrices(cmcConfig)
 			if err != nil {
-				// TOOD: double check.
 				slog.Error(err.Error())
 				continue
 			}

@@ -44,7 +44,7 @@ func Init() (config *Config, err error) {
 		}
 	}
 
-	viper.SetDefault("NATS_URLS", "nats://europe-west3-gcp-dl-testnet-brokernode-frankfurt01.syntropynet.com")
+	viper.SetDefault("NATS_URLS", "nats://europe-west3-gcp-dl-testnet-brokernode-frankfurt01.synternet.com")
 	viper.SetDefault("NATS_PREFIX_NAME", "syntropy_defi")
 	viper.SetDefault("NATS_PUB_NAME", "price")
 	viper.SetDefault("PUBLISH_INTERVAL_SEC", 60)

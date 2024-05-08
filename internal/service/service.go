@@ -6,8 +6,8 @@ import (
 	"log/slog"
 
 	"github.com/nats-io/nats.go"
-	"github.com/syntropynet/data-layer-sdk/pkg/service"
-	"github.com/syntropynet/price-publisher/pkg/cmc"
+	"github.com/synternet/data-layer-sdk/pkg/service"
+	"github.com/synternet/price-publisher/pkg/cmc"
 )
 
 type (

@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
-	"github.com/syntropynet/data-layer-sdk/pkg/options"
-	"github.com/syntropynet/price-publisher/internal/config"
-	"github.com/syntropynet/price-publisher/internal/service"
-	"github.com/syntropynet/price-publisher/pkg/cmc"
+	"github.com/synternet/data-layer-sdk/pkg/options"
+	"github.com/synternet/price-publisher/internal/config"
+	"github.com/synternet/price-publisher/internal/service"
+	"github.com/synternet/price-publisher/pkg/cmc"
 )
 
 func main() {

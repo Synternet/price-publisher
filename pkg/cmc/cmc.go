@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/syntropynet/price-publisher/internal/config"
+	"github.com/synternet/price-publisher/internal/config"
 )
 
 type CmcQuotesLatest struct {

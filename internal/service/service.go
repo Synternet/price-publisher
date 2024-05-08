@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 
@@ -38,12 +39,25 @@ func (s *PublishService) Start() context.Context {
 }
 
 func (s *PublishService) Serve(ctx context.Context) {
+
 	for msg := range s.allMsgTokenChan {
-		if err := s.Publish(msg, "all"); err != nil {
+
+		msgBytes, err := json.Marshal(msg)
+		if err != nil {
+			slog.Error("Failed to serialize message:", err)
+			continue
+		}
+
+		if err := s.PublishBuf(msgBytes, "all"); err != nil {
 			slog.Error(err.Error())
 		}
 		for symbol, data := range msg {
-			if err := s.Publish(data, fmt.Sprintf("single.%s", symbol)); err != nil {
+			dataBytes, err := json.Marshal(data)
+			if err != nil {
+				slog.Error("Failed to serialize message:", err)
+				continue
+			}
+			if err := s.PublishBuf(dataBytes, fmt.Sprintf("single.%s", symbol)); err != nil {
 				slog.Error(err.Error())
 			}
 		}

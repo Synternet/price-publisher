@@ -86,7 +86,8 @@ type QuoteInfo struct {
 
 func RetrievePrices(cfg config.CmcConfig) (*CmcQuotesLatest, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=%s", cfg.Ids), nil)
+	url := fmt.Sprintf("https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=%s", cfg.Ids)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}

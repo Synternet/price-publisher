@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -61,8 +62,14 @@ func main() {
 	defer ticker.Stop()
 
 	cmcConfig := config.CmcConfig{
-		Ids:    cfg.CmcConfig.Ids,
-		ApiKey: cfg.CmcConfig.ApiKey,
+		Ids:       cfg.CmcConfig.Ids,
+		IdsSingle: cfg.CmcConfig.IdsSingle,
+		ApiKey:    cfg.CmcConfig.ApiKey,
+	}
+
+	allowedIdsSingle := make(map[string]struct{})
+	for _, id := range strings.Split(cmcConfig.IdsSingle, ",") {
+		allowedIdsSingle[strings.TrimSpace(id)] = struct{}{}
 	}
 
 	defer sPub.Close()
@@ -87,10 +94,12 @@ func main() {
 					continue
 				}
 
-				symbolQuotes[dataItem.Symbol] = cmc.QuoteInfo{
-					Price:           usdQuote.Price,
-					PercentChange24: usdQuote.PercentChange24h,
-					LastUpdated:     usdQuote.LastUpdated.Unix(),
+				if _, exists := allowedIdsSingle[id]; exists {
+					symbolQuotes[dataItem.Symbol] = cmc.QuoteInfo{
+						Price:           usdQuote.Price,
+						PercentChange24: usdQuote.PercentChange24h,
+						LastUpdated:     usdQuote.LastUpdated.Unix(),
+					}
 				}
 			}
 

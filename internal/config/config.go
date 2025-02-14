@@ -7,8 +7,9 @@ import (
 )
 
 type CmcConfig struct {
-	Ids    string
-	ApiKey string
+	Ids       string
+	IdsSingle string
+	ApiKey    string
 }
 
 type NatsConfig struct {
@@ -48,6 +49,7 @@ func Init() (config *Config, err error) {
 	viper.SetDefault("NATS_PREFIX_NAME", "syntropy_defi")
 	viper.SetDefault("NATS_PUB_NAME", "price")
 	viper.SetDefault("PUBLISH_INTERVAL_SEC", 60)
+	viper.SetDefault("CMC_IDS_SINGLE", "")
 
 	viper.AutomaticEnv()
 	c := parseOsEnv(viper.GetViper())
@@ -65,8 +67,9 @@ func parseOsEnv(v *viper.Viper) *Config {
 			PublisherName: v.GetString("NATS_PUB_NAME"),
 		},
 		CmcConfig: CmcConfig{
-			Ids:    v.GetString("CMC_IDS"),
-			ApiKey: v.GetString("CMC_API_KEY"),
+			Ids:       v.GetString("CMC_IDS"),
+			IdsSingle: v.GetString("CMC_IDS_SINGLE"),
+			ApiKey:    v.GetString("CMC_API_KEY"),
 		},
 	}
 }

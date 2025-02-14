@@ -18,6 +18,10 @@ if [ ! -z "$CMC_IDS" ]; then
   CMD="$CMD --cmd-ids $CMC_IDS"
 fi
 
+if [ ! -z "$CMC_IDS_SINGLE" ]; then
+  CMD="$CMD --cmd-ids-single $CMC_IDS_SINGLE"
+fi
+
 if [ ! -z "$CMC_API_KEY" ]; then
   CMD="$CMD --cmc-api-key $CMC_API_KEY"
 fi

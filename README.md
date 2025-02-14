@@ -18,6 +18,7 @@ Retrieves prices from CoinMarketCap and publishes them on interval basis.
 | NATS_PREFIX_NAME          | DL publisher stream prefix name. `syntropy` results in: `syntropy.<pub-name>.all`. Default `syntropy_defi`.                 |
 | NATS_PUB_NAME             | DL publisher stream publisher name. `price` results in: `<sub-name>.price.all`. Default `price`.                            |
 | CMC_IDS                   | Comma separated list of CoinMarketCap tokens ids (e.g.: `825,3408,12220,3794,22861,21420,21686,7226,13678,7431,1027,3717`). |
+| CMC_IDS_SINGLE            | Comma separated list of CoinMarketCap tokens ids (e.g.: `825,3408,12220,3794,22861,21420,21686,7226,13678,7431,1027,3717`). to publish separately |
 | CMC_API_KEY               | CoinMarketCap API key.                                                                                                      |
 | PUBLISH_INTERVAL_SEC      | Prices publish interval in seconds. Default: `5` seconds.                                                                   |
 

@@ -39,9 +39,10 @@ func main() {
 
 	slog.Info("Connected to NATS", "URLS", cfg.NatsConfig.Urls)
 
-	allMsgChan := make(service.AllMessageChannel, 1024)
+	allMsgChan := make(service.AllMessageChannel, 100)
+	singleMsgChan := make(service.SingleMessageChannel, 100)
 
-	sPub := service.New(conn, context.Background(), cfg.NatsConfig.PrefixName, cfg.NatsConfig.PublisherName, allMsgChan)
+	sPub := service.New(conn, context.Background(), cfg.NatsConfig.PrefixName, cfg.NatsConfig.PublisherName, allMsgChan, singleMsgChan)
 	sPub.Start()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -94,11 +95,15 @@ func main() {
 					continue
 				}
 
+				symbolQuotes[dataItem.Symbol] = cmc.QuoteInfo{
+					Price:           usdQuote.Price,
+					PercentChange24: usdQuote.PercentChange24h,
+					LastUpdated:     usdQuote.LastUpdated.Unix(),
+				}
 				if _, exists := allowedIdsSingle[id]; exists {
-					symbolQuotes[dataItem.Symbol] = cmc.QuoteInfo{
-						Price:           usdQuote.Price,
-						PercentChange24: usdQuote.PercentChange24h,
-						LastUpdated:     usdQuote.LastUpdated.Unix(),
+					singleMsgChan <- service.SingleMessage{
+						Symbol: dataItem.Symbol,
+						Data:   symbolQuotes[dataItem.Symbol],
 					}
 				}
 			}
@@ -114,10 +119,10 @@ func setErrorHandlers(conn *nats.Conn) {
 	}
 
 	conn.SetErrorHandler(func(_ *nats.Conn, _ *nats.Subscription, err error) {
-		slog.Error("NATS error", err)
+		slog.Error("NATS error", "error", err)
 	})
 	conn.SetDisconnectHandler(func(c *nats.Conn) {
-		slog.Error("NATS disconnected", c.LastError())
+		slog.Error("NATS disconnected", "error", c.LastError())
 	})
 	conn.SetReconnectHandler(func(_ *nats.Conn) {
 		slog.Info("NATS reconnected")

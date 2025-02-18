@@ -95,11 +95,18 @@ func main() {
 					continue
 				}
 
-				symbolQuotes[dataItem.Symbol] = cmc.QuoteInfo{
-					Price:           usdQuote.Price,
-					PercentChange24: usdQuote.PercentChange24h,
-					LastUpdated:     usdQuote.LastUpdated.Unix(),
+				item := cmc.QuoteInfo{
+					Price:              usdQuote.Price,
+					Volume24h:          usdQuote.Volume24h,
+					VolumeChange24h:    usdQuote.VolumeChange24h,
+					PercentChange24h:   usdQuote.PercentChange24h,
+					PercentChange30d:   usdQuote.PercentChange30d,
+					MarketCap:          usdQuote.MarketCap,
+					LastUpdated:        usdQuote.LastUpdated.Unix(),
+					MarketCapDominance: &usdQuote.MarketCapDominance,
 				}
+
+				symbolQuotes[dataItem.Symbol] = item
 				if _, exists := allowedIdsSingle[id]; exists {
 					singleMsgChan <- service.SingleMessage{
 						Symbol: dataItem.Symbol,

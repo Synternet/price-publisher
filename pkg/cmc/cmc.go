@@ -79,9 +79,14 @@ type Quote struct {
 }
 
 type QuoteInfo struct {
-	Price           float64 `json:"price"`
-	PercentChange24 float64 `json:"price_percent_change_24h"`
-	LastUpdated     int64   `json:"last_updated"`
+	Price              float64  `json:"price"`
+	Volume24h          float64  `json:"volume_24h"`
+	VolumeChange24h    float64  `json:"volume_change_24h"`
+	PercentChange24h   float64  `json:"price_percent_change_24h"`
+	PercentChange30d   float64  `json:"price_percent_change_30d"`
+	MarketCap          float64  `json:"market_cap"`
+	MarketCapDominance *float64 `json:"market_cap_dominance"`
+	LastUpdated        int64    `json:"last_updated"`
 }
 
 func RetrievePrices(cfg config.CmcConfig) (*CmcQuotesLatest, error) {
